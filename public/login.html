@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In — HAK Engineering</title>
+  <link rel="icon" href="https://www.hakeng.sa/favicon.ico" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    body { display:flex; align-items:center; justify-content:center; min-height:100vh; }
+    .login-box { width:100%; max-width:400px; padding:0 20px; }
+    .login-logo { display:flex; align-items:center; gap:12px; justify-content:center; margin-bottom:28px; }
+    .login-logo .brand-icon { width:48px; height:48px; background:var(--brand); border-radius:12px; display:flex; align-items:center; justify-content:center; }
+    .login-logo h1 { font-size:1.25rem; font-weight:800; color:var(--brand); }
+    .login-logo p  { font-size:.82rem; color:var(--muted); }
+    .demo-users { background:#f0f4fb; border:1px solid var(--border); border-radius:var(--radius); padding:12px 16px; margin-bottom:20px; }
+    .demo-users p { font-size:.78rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; margin-bottom:8px; }
+    .demo-user-btn { display:inline-block; margin:3px 4px 3px 0; padding:4px 10px; background:var(--surface); border:1px solid var(--border); border-radius:20px; font-size:.8rem; cursor:pointer; color:var(--brand); font-weight:500; transition:background .12s; }
+    .demo-user-btn:hover { background:#e8f0fb; }
+  </style>
+</head>
+<body>
+
+<div class="login-box">
+  <div class="login-logo">
+    <div class="">
+      <img src="https://www.hakeng.sa/images/logo/HAK%20Logo-white.jpg" alt="HAK Engineering" height="48" style="display:block" />
+    </div>
+    <div>
+      <h1>HAK Doc Approval</h1>
+      <p>HAK Engineering</p>
+    </div>
+  </div>
+
+  <div id="alertBox"></div>
+
+  <div class="demo-users">
+    <p>Demo users — click to fill</p>
+    <span class="demo-user-btn" data-email="ahmed@hakeng.sa">Ahmed</span>
+    <span class="demo-user-btn" data-email="sara@hakeng.sa">Sara</span>
+    <span class="demo-user-btn" data-email="mohammed@hakeng.sa">Mohammed</span>
+    <span class="demo-user-btn" data-email="fatima@hakeng.sa">Fatima</span>
+    <span class="demo-user-btn" data-email="khalid@hakeng.sa">Khalid</span>
+    <span class="demo-user-btn" data-email="nora@hakeng.sa">Nora</span>
+  </div>
+
+  <div class="card">
+    <form id="loginForm">
+      <div class="form-group" style="margin-bottom:16px">
+        <label>Email</label>
+        <input type="email" id="emailInput" placeholder="you@hakeng.sa" required autocomplete="email" />
+      </div>
+      <div class="form-group" style="margin-bottom:20px">
+        <label>Password</label>
+        <input type="password" id="passwordInput" placeholder="password" required autocomplete="current-password" />
+        <span class="text-muted" style="font-size:.78rem;margin-top:4px">Demo password: <strong>password</strong></span>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%" id="loginBtn">Sign In</button>
+    </form>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script>
+  // Skip login if already authenticated
+  if (localStorage.getItem('hak_user')) window.location.href = '/';
+
+  // Demo user quick-fill
+  $('.demo-user-btn').on('click', function () {
+    $('#emailInput').val($(this).data('email'));
+    $('#passwordInput').val('password');
+    $('#emailInput').trigger('focus');
+  });
+
+  // Login form submit
+  $('#loginForm').on('submit', async function (e) {
+    e.preventDefault();
+    $('#alertBox').html('');
+
+    const $btn = $('#loginBtn').prop('disabled', true).text('Signing in…');
+
+    try {
+      const res  = await fetch('/api/auth/login', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          email:    $('#emailInput').val().trim(),
+          password: $('#passwordInput').val(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Login failed');
+
+      localStorage.setItem('hak_user', JSON.stringify(data.user));
+      window.location.href = '/';
+    } catch (err) {
+      $('#alertBox').html(`<div class="alert alert-error">${err.message}</div>`);
+    } finally {
+      $btn.prop('disabled', false).text('Sign In');
+    }
+  });
+</script>
+</body>
+</html>

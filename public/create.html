@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>New Document Request — HAK Engineering</title>
+  <link rel="icon" href="https://www.hakeng.sa/favicon.ico" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="/" class="logo">
+    <img src="https://www.hakeng.sa/images/logo/HAK%20Logo-white.jpg" alt="HAK Engineering" height="32" style="display:block" />
+  </a>
+  <nav>
+    <a href="/">All Requests</a>
+    <a href="/create.html" class="active">New Request</a>
+  </nav>
+</nav>
+
+<div class="page-sm">
+  <div class="page-header">
+    <div>
+      <h1>New Document Request</h1>
+      <div class="sub">Complete all fields, attach a PDF, add approvers, then submit.</div>
+    </div>
+    <a href="/" class="btn btn-outline">← Back</a>
+  </div>
+
+  <div id="alertBox"></div>
+
+  <!-- ── Request Details ──────────────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-title">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="3" stroke="var(--brand)" stroke-width="1.8"/><path d="M5 6h8M5 9h8M5 12h5" stroke="var(--brand)" stroke-width="1.6" stroke-linecap="round"/></svg>
+      Request Details
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Title *</label>
+        <input type="text" id="fTitle" placeholder="" />
+      </div>
+
+      <div class="form-group">
+        <label>Request Type *</label>
+        <select id="fType">
+          <option value="">Select type…</option>
+          <option value="Internal Approval">Internal Approval</option>
+          <option value="Client Submission">Client Submission</option>
+          <option value="Contract Review">Contract Review</option>
+          <option value="Signature Request">Signature Request</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Priority</label>
+        <select id="fPriority">
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+          <option value="High">High</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Requested By</label>
+        <input type="text" id="fRequestedBy" readonly style="background:#f0f4fb;cursor:not-allowed" />
+      </div>
+
+      <div class="form-group">
+        <label>Department</label>
+        <input type="text" id="fDept" readonly style="background:#f0f4fb;cursor:not-allowed" />
+      </div>
+
+      <div class="form-group">
+        <label>Due Date</label>
+        <input type="date" id="fDueDate" />
+      </div>
+
+      <div class="form-group">
+        <label>External Party Name</label>
+        <input type="text" id="fExtName" placeholder="Client / vendor name" />
+      </div>
+
+      <div class="form-group">
+        <label>External Party Email / WhatsApp</label>
+        <input type="text" id="fExtContact" placeholder="email or +966…" />
+      </div>
+
+      <div class="form-group full">
+        <label>Remarks</label>
+        <textarea id="fRemarks" placeholder="Any additional context or notes…"></textarea>
+      </div>
+
+      <div class="form-group full">
+        <label>PDF Attachment *</label>
+        <!-- Using <label> so clicking anywhere opens the file picker — no JS needed -->
+        <label class="file-input-wrapper" for="pdfInput">
+          <input type="file" id="pdfInput" accept="application/pdf" />
+          <div class="file-label">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" style="vertical-align:middle;margin-right:6px"><path d="M11 2v12M6 9l5-5 5 5" stroke="var(--muted)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 17h16" stroke="var(--muted)" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <span>Click to choose</span> or drag a PDF here
+          </div>
+          <div class="file-name" id="fileName"></div>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Approvers -->
+  <div class="card">
+    <div class="card-title">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="7" cy="6" r="3" stroke="var(--brand)" stroke-width="1.8"/><path d="M2 15c0-3 2.2-5 5-5" stroke="var(--brand)" stroke-width="1.8" stroke-linecap="round"/><circle cx="13" cy="10" r="2.5" stroke="var(--brand)" stroke-width="1.6"/><path d="M13 12.5V15m-1.5-1.5h3" stroke="var(--brand)" stroke-width="1.6" stroke-linecap="round"/></svg>
+      Approvers
+      <span class="text-muted" style="font-weight:400;font-size:.82rem;margin-left:4px">— approvals happen in the order listed</span>
+    </div>
+
+    <div id="approverList" style="margin-bottom:12px"></div>
+
+    <!-- Add approver inline -->
+    <div style="border:1px solid var(--border);border-radius:var(--radius);padding:16px;background:#fafbfd">
+      <div style="font-size:.85rem;font-weight:700;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.4px">Add Approver</div>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr">
+        <div class="form-group full">
+          <label>User *</label>
+          <select id="aUser"><option value="">Select a user…</option></select>
+        </div>
+        <div class="form-group">
+          <label>Role</label>
+          <select id="aRole">
+            <option value="Reviewer">Reviewer</option>
+            <option value="Approver" selected>Approver</option>
+            <option value="Signatory">Signatory</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-outline btn-sm" style="margin-top:10px" id="addApproverBtn">+ Add to List</button>
+    </div>
+
+    <hr class="divider" />
+    <div style="display:flex;justify-content:flex-end">
+      <button class="btn btn-primary" id="submitBtn">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Submit for Approval
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="/js/auth.js"></script>
+<script>
+  const currentUser = requireAuth();
+  if (currentUser) {
+    injectUserNav();
+    $('#fRequestedBy').val(currentUser.name);
+    $('#fDept').val(currentUser.department);
+  }
+
+  // Default due date to today
+  $('#fDueDate').val(new Date().toISOString().slice(0, 10));
+
+  let localApprovers = [];
+
+  // Helpers 
+  function toast(msg, type = '') {
+    $('#toast').attr('class', 'show' + (type ? ' toast-' + type : '')).text(msg);
+    clearTimeout(window._toastTimer);
+    window._toastTimer = setTimeout(() => $('#toast').attr('class', ''), 3500);
+  }
+
+  function showAlert(msg, type = 'error') {
+    $('#alertBox').html(`<div class="alert alert-${type}">${msg}</div>`);
+    $('html, body').animate({ scrollTop: 0 }, 300);
+  }
+
+  $('#pdfInput').on('change', function () {
+    $('#fileName').text(this.files[0] ? '✓ ' + this.files[0].name : '');
+  });
+
+  async function loadUsers() {
+    const res   = await fetch('/api/users');
+    const users = await res.json();
+    users
+      .filter(u => u.id !== currentUser.id)   // current user can't approve their own request
+      .forEach(u => {
+        $('#aUser').append(
+          $('<option>')
+            .val(u.id)
+            .text(`${u.name} — ${u.department}`)
+            .data('name', u.name)
+            .data('email', u.email)
+            .data('dept', u.department)
+        );
+      });
+  }
+  loadUsers();
+
+  // Add approver to local list
+  $('#addApproverBtn').on('click', function () {
+    const $opt   = $('#aUser option:selected');
+    const userId = parseInt($('#aUser').val());
+    if (!userId) { toast('Please select a user', 'error'); return; }
+
+    if (localApprovers.find(a => a.user_id === userId)) {
+      toast('This user is already in the list', 'error');
+      return;
+    }
+
+    localApprovers.push({
+      user_id:    userId,
+      name:       $opt.data('name'),
+      email:      $opt.data('email'),
+      department: $opt.data('dept'),
+      role:       $('#aRole').val(),
+    });
+
+    $('#aUser').val('');
+    renderLocalApprovers();
+  });
+
+  function renderLocalApprovers() {
+    if (!localApprovers.length) {
+      $('#approverList').html('<p class="text-muted">No approvers added yet.</p>');
+      return;
+    }
+    $('#approverList').html(localApprovers.map((a, idx) => `
+      <div class="approver-row">
+        <div class="approver-seq">${idx + 1}</div>
+        <div class="approver-info">
+          <div class="approver-name">${esc(a.name)}</div>
+          <div class="approver-email">${esc(a.email)} · ${esc(a.department)}</div>
+        </div>
+        <span class="badge badge-${a.role.toLowerCase()}">${a.role}</span>
+        <button class="btn btn-danger btn-sm remove-approver" data-idx="${idx}">✕</button>
+      </div>
+    `).join(''));
+  }
+
+  //  Remove from local list
+  $('#approverList').on('click', '.remove-approver', function () {
+    localApprovers.splice($(this).data('idx'), 1);
+    renderLocalApprovers();
+  });
+
+  //  Submit everything in sequence 
+  $('#submitBtn').on('click', async function () {
+    $('#alertBox').html('');
+
+    // Client-side validation
+    if (!$('#fTitle').val().trim())     { showAlert('Title is required'); return; }
+    if (!$('#fType').val())             { showAlert('Request type is required'); return; }
+    if (!$('#pdfInput')[0].files[0])    { showAlert('A PDF attachment is required'); return; }
+    if (!localApprovers.length)         { showAlert('Add at least one approver'); return; }
+
+    const $btn = $(this).prop('disabled', true).text('Submitting…');
+
+    try {
+      const fd = new FormData();
+      fd.append('title',                  $('#fTitle').val().trim());
+      fd.append('request_type',           $('#fType').val());
+      fd.append('priority',               $('#fPriority').val());
+      fd.append('requested_by_user_id',   currentUser.id);
+      fd.append('department',             currentUser.department);
+      fd.append('due_date',               $('#fDueDate').val());
+      fd.append('external_party_name',    $('#fExtName').val().trim());
+      fd.append('external_party_contact', $('#fExtContact').val().trim());
+      fd.append('remarks',                $('#fRemarks').val().trim());
+      fd.append('pdf',                    $('#pdfInput')[0].files[0]);
+      fd.append('approvers',              JSON.stringify(
+        localApprovers.map(a => ({ user_id: a.user_id, role: a.role }))
+      ));
+
+      const res  = await fetch('/api/requests', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      toast('Submitted successfully!', 'success');
+      setTimeout(() => window.location.href = `/view.html?id=${data.id}`, 900);
+
+    } catch (err) {
+      showAlert(err.message);
+      $btn.prop('disabled', false).html(`
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Submit for Approval
+      `);
+    }
+  });
+
+  // Render empty state on load
+  renderLocalApprovers();
+</script>
+</body>
+</html>

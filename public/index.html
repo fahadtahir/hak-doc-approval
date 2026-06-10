@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Document Requests — HAK Engineering</title>
+  <link rel="icon" href="https://www.hakeng.sa/favicon.ico">
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css" />
+  <style>
+    /* ── Fit DataTables into our design ─────────────────────────────────────── */
+    .dataTables_wrapper .dataTables_filter input {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 7px 12px;
+      font-size: .88rem;
+      margin-left: 6px;
+      background: var(--surface);
+      color: var(--text);
+    }
+    .dataTables_wrapper .dataTables_filter input:focus {
+      outline: none;
+      border-color: var(--brand);
+    }
+    .dataTables_wrapper .dataTables_length select {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 5px 8px;
+      font-size: .88rem;
+      background: var(--surface);
+      color: var(--text);
+    }
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_length {
+      font-size: .85rem;
+      color: var(--muted);
+      padding: 12px 16px;
+    }
+    .dataTables_wrapper .dataTables_paginate {
+      padding: 10px 16px;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+      border-radius: 6px !important;
+      padding: 4px 10px !important;
+      font-size: .85rem;
+      color: var(--brand) !important;
+      border: 1px solid transparent !important;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+      background: var(--brand) !important;
+      color: #fff !important;
+      border-color: var(--brand) !important;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+      background: #e8f0fb !important;
+      border-color: var(--border) !important;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+      color: var(--muted) !important;
+      background: transparent !important;
+    }
+    table.dataTable thead th {
+      background: var(--brand);
+      color: #fff;
+      border-bottom: none !important;
+      padding: 11px 14px;
+      white-space: nowrap;
+    }
+    table.dataTable thead th.sorting::after,
+    table.dataTable thead th.sorting_asc::after,
+    table.dataTable thead th.sorting_desc::after {
+      opacity: .7;
+    }
+    table.dataTable tbody tr:hover { background: #f0f4fb !important; }
+    table.dataTable tbody td { padding: 11px 14px; vertical-align: middle; border-bottom: 1px solid var(--border); }
+    table.dataTable tbody td a { color: var(--brand); font-weight: 600; text-decoration: none; }
+    table.dataTable tbody td a:hover { text-decoration: underline; }
+    div.dataTables_wrapper div.dataTables_filter { text-align: right; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="/" class="logo">
+    <img src="https://www.hakeng.sa/images/logo/HAK%20Logo-white.jpg" alt="HAK Engineering" height="32" style="display:block" />
+  </a>
+  <nav>
+    <a href="/" class="active">All Requests</a>
+    <a href="/create.html">New Request</a>
+  </nav>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1>Document Requests</h1>
+      <div class="sub">Internal approval workflow — HAK Engineering</div>
+    </div>
+    <a href="/create.html" class="btn btn-primary">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+      New Request
+    </a>
+  </div>
+
+  <!-- Stats row -->
+  <div id="statsRow" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px"></div>
+
+  <!-- Table -->
+  <div class="card" style="padding:0;overflow:hidden">
+    <table id="requestTable" style="width:100%">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Title</th>
+          <th>Requested By</th>
+          <th>Department</th>
+          <th>Priority</th>
+          <th>Status</th>
+          <th>Current Approver</th>
+          <th>Due Date</th>
+          <th>Aging (days)</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="/js/auth.js"></script>
+<script>
+  const currentUser = requireAuth();
+  if (currentUser) injectUserNav();
+
+  const statusClass   = { 'Draft':'badge-draft', 'Pending Approval':'badge-pending', 'Approved':'badge-approved', 'Rejected':'badge-rejected' };
+  const priorityClass = { Low:'badge-low', Medium:'badge-medium', High:'badge-high' };
+
+  function fmtDate(d) {
+    return d ? new Date(d).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }) : '—';
+  }
+
+  function renderStats(rows) {
+    const counts = {};
+    rows.forEach(r => { counts[r.status] = (counts[r.status] || 0) + 1; });
+    const items = [
+      { label: 'Total',            val: rows.length,                     color: '#1a4f8a' },
+      { label: 'Pending Approval', val: counts['Pending Approval'] || 0, color: '#d4780a' },
+      { label: 'Approved',         val: counts['Approved'] || 0,         color: '#1f8c5e' },
+      { label: 'Rejected',         val: counts['Rejected'] || 0,         color: '#d0392a' },
+    ];
+    $('#statsRow').html(items.map(i => `
+      <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px 20px;min-width:110px;text-align:center;box-shadow:var(--shadow)">
+        <div style="font-size:1.6rem;font-weight:800;color:${i.color}">${i.val}</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:2px">${i.label}</div>
+      </div>
+    `).join(''));
+  }
+
+  async function load() {
+    try {
+      const res  = await fetch('/api/requests');
+      const rows = await res.json();
+
+      renderStats(rows);
+
+      $('#requestTable').DataTable({
+        data:      rows,
+        order:     [[0, 'desc']],
+        pageLength: 25,
+        language: {
+          search:        'Search requests:',
+          emptyTable:    'No requests found.',
+          zeroRecords:   'No matching requests.',
+          lengthMenu:    'Show _MENU_ requests',
+          info:          'Showing _START_–_END_ of _TOTAL_ requests',
+          infoEmpty:     'No requests to show',
+          infoFiltered:  '(filtered from _MAX_ total)',
+        },
+        columns: [
+          {
+            data: 'id',
+            width: '50px',
+            render: id => `<span class="text-muted">${id}</span>`,
+          },
+          {
+            data: null,
+            render: r => `<a href="/view.html?id=${r.id}">${esc(r.title)}</a>`,
+          },
+          { data: 'requested_by', render: $.fn.dataTable.render.text() },
+          { data: 'department',   render: $.fn.dataTable.render.text() },
+          {
+            data: 'priority',
+            render: p => `<span class="badge ${priorityClass[p] || ''}">${p}</span>`,
+          },
+          {
+            data: 'status',
+            render: s => `<span class="badge ${statusClass[s] || ''}">${s}</span>`,
+          },
+          {
+            data: 'current_pending_approver',
+            render: v => v ? `<span style="font-size:.88rem">${esc(v)}</span>` : '<span class="text-muted">—</span>',
+          },
+          {
+            data: 'due_date',
+            render: d => fmtDate(d),
+          },
+          {
+            data: 'aging_days',
+            render: n => {
+              const style = n > 7 ? 'color:var(--danger);font-weight:700' : n > 3 ? 'color:var(--warning);font-weight:600' : '';
+              return `<span style="${style}">${n ?? 0}</span>`;
+            },
+          },
+        ],
+      });
+
+    } catch (e) {
+      $('#requestTable tbody').html(
+        `<tr><td colspan="9" class="empty-state" style="color:var(--danger)">Failed to load: ${e.message}</td></tr>`
+      );
+    }
+  }
+
+  load();
+</script>
+</body>
+</html>
